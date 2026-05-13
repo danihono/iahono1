@@ -1180,6 +1180,15 @@
       setTimeout(() => introSkip.classList.add('is-visible'), 2000);
     });
 
+    showcaseTitleLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = showcaseTitleLink.getAttribute('href');
+      const target = document.querySelector(href);
+      if (!target) return;
+      showcaseHijackActive = false;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
     console.log('%c HONO IA — Build Carregado','background:#FF2D00;color:#000;padding:4px 8px;font-weight:bold;');
   </script>
 </body>
