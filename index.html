@@ -6,11 +6,10 @@
   <title>HONO IA — Cinema Tech</title>
   <meta name="description" content="Hono IA — landing pages, sistemas e conteúdos com IA.">
 
-  <link rel="preload" as="video" href="/assets/video-01.mp4" type="video/mp4">
-  <link rel="preload" as="video" href="/assets/video-02.mp4" type="video/mp4">
-  <link rel="preload" as="image" href="/assets/video-01-lastframe.jpg">
-  <link rel="preload" as="image" href="/assets/img.png">
-  <link rel="preload" as="image" href="/assets/landing-take-01-poster.jpg">
+  <link rel="preload" as="image" href="assets/video-01-lastframe.jpg">
+  <link rel="preload" as="image" href="assets/img.png">
+  <link rel="preload" as="image" href="assets/landing-take-01-poster.jpg">
+  <link rel="preload" as="image" href="assets/intro-poster.jpg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -238,6 +237,14 @@
       object-fit: cover;
       display: block;
     }
+    .showcase-carousel-video {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--dur-fade) var(--ease-primary);
+    }
+    .showcase-carousel-video.is-active { opacity: 1; }
+    .showcase-carousel-video--casal { object-position: center 38%; }
 
     /* Película */
     .showcase-film {
@@ -510,9 +517,9 @@
 <body class="is-locked">
 
   <div id="cut-overlay">
-    <video id="cut-video" src="/assets/landing-take-01.mp4"
+    <video id="cut-video" src="assets/landing-take-01.mp4"
            loop muted playsinline preload="auto"
-           poster="/assets/landing-take-01-poster.jpg"></video>
+           poster="assets/landing-take-01-poster.jpg"></video>
     <div class="showcase-film"></div>
     <div class="showcase-gradient"></div>
     <div class="cut-title-wrap">
@@ -527,7 +534,7 @@
   </div>
 
   <div id="intro-overlay">
-    <video id="intro-video" src="/assets/B40BCBB8-6011-4156-A761-E491D480E974.mov" playsinline preload="auto"></video>
+    <video id="intro-video" src="assets/intro.mp4" muted playsinline preload="auto" poster="assets/intro-poster.jpg"></video>
     <button id="intro-skip" type="button">PULAR</button>
   </div>
 
@@ -550,10 +557,10 @@
   <main>
     <section id="section-01">
       <div class="zoom-stage" id="zoom-stage">
-        <video class="video-01" id="video-01" src="/assets/video-01.mp4" playsinline preload="auto"></video>
-        <video class="video-02" id="video-02" src="/assets/video-02.mp4" muted playsinline preload="auto"></video>
-        <img class="v1-poster" id="v1-poster" src="/assets/video-01-lastframe.jpg" alt="" aria-hidden="true">
-        <img class="v2-poster" id="v2-poster" src="/assets/img.png" alt="" aria-hidden="true">
+        <video class="video-01" id="video-01" src="assets/video-01.mp4" playsinline preload="auto"></video>
+        <video class="video-02" id="video-02" src="assets/video-02.mp4" muted playsinline preload="auto"></video>
+        <img class="v1-poster" id="v1-poster" src="assets/video-01-lastframe.jpg" alt="" aria-hidden="true">
+        <img class="v2-poster" id="v2-poster" src="assets/img.png" alt="" aria-hidden="true">
 
         <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
           <div class="scroll-cue__chevron">
@@ -568,18 +575,21 @@
       <div class="showcase-stage" id="showcase-stage">
 
         <div class="showcase-media is-active" data-theme="0">
-          <video src="/assets/landing-take-01.mp4"
-                 poster="/assets/landing-take-01-poster.jpg"
+          <video src="assets/landing-take-01.mp4"
+                 poster="assets/landing-take-01-poster.jpg"
                  loop muted playsinline preload="auto"></video>
         </div>
         <div class="showcase-media" data-theme="1">
-          <video src="/assets/video-02.mp4"
-                 poster="/assets/img.png"
+          <video src="assets/video-02.mp4"
+                 poster="assets/img.png"
                  loop muted playsinline preload="auto"></video>
         </div>
         <div class="showcase-media" data-theme="2">
-          <video src="/assets/landing-take-01.mp4"
-                 poster="/assets/landing-take-01-poster.jpg"
+          <video class="showcase-carousel-video is-active" src="assets/spider.mp4"
+                 loop muted playsinline preload="auto"></video>
+          <video class="showcase-carousel-video" src="assets/3.mov"
+                 loop muted playsinline preload="auto"></video>
+          <video class="showcase-carousel-video showcase-carousel-video--casal" src="assets/casal.mp4"
                  loop muted playsinline preload="auto"></video>
         </div>
 
@@ -641,7 +651,8 @@
   </button>
 
   <script>
-    gsap.registerPlugin(ScrollTrigger);
+    const hasScrollTrigger = Boolean(window.gsap && window.ScrollTrigger);
+    if (hasScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 
     const body          = document.body;
     const cutOverlay    = document.getElementById('cut-overlay');
@@ -675,6 +686,8 @@
     ];
 
     let activeTheme = 0;
+    const THEME_CAROUSEL_SECONDS = 4;
+    let themeCarouselTimer = null;
 
     // SCROLL LOCK (Act 1)
     let scrollLockEnabled = true;
@@ -689,15 +702,14 @@
       if (blocked.includes(e.key)) e.preventDefault();
     });
 
-    const tryPlayWithAudio = async () => {
+    const tryPlayIntro = async () => {
       try {
-        introVideo.muted = false;
-        introVideo.volume = 1.0;
-        await introVideo.play();
-      } catch (err) {
         introVideo.muted = true;
-        try { await introVideo.play(); } catch (e2) {}
+        await introVideo.play();
         unmuteBtn.classList.add('is-visible');
+      } catch (err) {
+        console.warn('Intro video nao conseguiu iniciar.', err);
+        endAct1();
       }
     };
     unmuteBtn.addEventListener('click', () => {
@@ -705,7 +717,6 @@
       introVideo.volume = 1.0;
       unmuteBtn.classList.remove('is-visible');
     });
-    tryPlayWithAudio();
 
     // Mostra botão de pular após 2s
     setTimeout(() => introSkip.classList.add('is-visible'), 2000);
@@ -739,9 +750,14 @@
       if ((introVideo.duration - introVideo.currentTime) <= INTRO_END_EARLY_SEC) endAct1();
     });
     introVideo.addEventListener('ended', endAct1);
+    introVideo.addEventListener('error', () => {
+      console.warn('Intro video nao carregou.', introVideo.error);
+      endAct1();
+    });
     introSkip.addEventListener('click', endAct1);
     // Fallback caso o vídeo não carregue
     setTimeout(endAct1, 20000);
+    tryPlayIntro();
 
     let escTimer = null;
     window.addEventListener('keydown', (e) => {
@@ -754,19 +770,45 @@
     });
 
     // CORTE — landing fixo quando video-02 vai pra tela preta
-    const BLACK_CUTOFF_SEC = 1.2; // segundos antes do fim que faz o corte
+    const BLACK_CUTOFF_SEC = 1.2; // segundos antes do fim que considera tela preta
+    const BLACK_CUT_DELAY_MS = 2000; // espera no preto antes de ir para a landing
     let cutDone = false;
+    let cutTimer = null;
     let showcaseHijackActive = false;
     let wheelLockedUntil = 0;
     let section02PinTrigger = null;
     const doCut = () => {
       if (cutDone) return;
       cutDone = true;
+      if (cutTimer) {
+        clearTimeout(cutTimer);
+        cutTimer = null;
+      }
       cutOverlay.classList.remove('is-active');
       showcaseHijackActive = true;
       switchTheme(0, true);
       document.getElementById('section-02').scrollIntoView({ block: 'start' });
     };
+    const scheduleCut = () => {
+      if (cutDone || cutTimer) return;
+      cutTimer = setTimeout(doCut, BLACK_CUT_DELAY_MS);
+    };
+    const cancelScheduledCut = () => {
+      if (!cutTimer) return;
+      clearTimeout(cutTimer);
+      cutTimer = null;
+    };
+    const preventCutDelayScroll = (e) => {
+      if (!cutTimer || cutDone) return;
+      e.preventDefault();
+    };
+    window.addEventListener('wheel', preventCutDelayScroll, { passive: false });
+    window.addEventListener('touchmove', preventCutDelayScroll, { passive: false });
+    window.addEventListener('keydown', (e) => {
+      if (!cutTimer || cutDone) return;
+      const blocked = ['ArrowDown','ArrowUp','PageDown','PageUp','Space',' ','Home','End'];
+      if (blocked.includes(e.key)) e.preventDefault();
+    });
 
     // ACT 3 — Scroll-scrub
     const SCREEN_ORIGIN_X = 50, SCREEN_ORIGIN_Y = 42, MAX_SCALE = 1.3;
@@ -781,7 +823,8 @@
     window.addEventListener('scroll', onFirstScroll, { passive: true });
     window.addEventListener('wheel', () => { if (act1Done) onFirstScroll(); }, { passive: true });
 
-    ScrollTrigger.create({
+    if (hasScrollTrigger) {
+      ScrollTrigger.create({
       trigger: '#section-01',
       start: 'top top',
       end: '+=200%',
@@ -798,7 +841,8 @@
             if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
             v2Poster.classList.toggle('is-visible', t <= VIDEO02_IMAGE_COVER_SEC);
             // Corte: quando sobra menos de BLACK_CUTOFF_SEC, vai pra tela preta → corta
-            if (!cutDone && (video02.duration - t) <= BLACK_CUTOFF_SEC) doCut();
+            if (!cutDone && (video02.duration - t) <= BLACK_CUTOFF_SEC) scheduleCut();
+            else cancelScheduledCut();
           } else {
             v2Poster.classList.add('is-visible');
           }
@@ -816,13 +860,15 @@
       onLeave:     () => zoomStage.style.willChange = 'auto',
       onEnterBack: () => zoomStage.style.willChange = 'transform',
       onLeaveBack: () => zoomStage.style.willChange = 'auto',
-    });
+      });
+    }
 
     // ============================================================
     // SECTION 02 — Scroll hijack
     // ============================================================
     // Cria pin manual da Section 02 quando ela entra
-    section02PinTrigger = ScrollTrigger.create({
+    if (hasScrollTrigger) {
+      section02PinTrigger = ScrollTrigger.create({
       trigger: '#section-02',
       start: 'top top',
       end: 'bottom top',
@@ -840,7 +886,8 @@
       },
       onLeave: () => { showcaseHijackActive = false; },
       onLeaveBack: () => { showcaseHijackActive = false; },
-    });
+      });
+    }
 
     window.addEventListener('wheel', (e) => {
       if (!showcaseHijackActive) return;
@@ -986,15 +1033,58 @@
       });
     }
 
+    function stopThemeCarouselTimer() {
+      if (!themeCarouselTimer) return;
+      clearTimeout(themeCarouselTimer);
+      themeCarouselTimer = null;
+    }
+
+    function playFromStart(video) {
+      video.currentTime = 0;
+      video.play().catch(()=>{});
+    }
+
+    function scheduleThemeCarousel(mediaEl) {
+      stopThemeCarouselTimer();
+      themeCarouselTimer = setTimeout(() => advanceThemeCarousel(mediaEl), THEME_CAROUSEL_SECONDS * 1000);
+    }
+
+    function advanceThemeCarousel(mediaEl) {
+      if (!mediaEl.classList.contains('is-active')) return;
+      const videos = Array.from(mediaEl.querySelectorAll('video'));
+      if (videos.length < 2) return;
+
+      const currentIdx = Math.max(0, videos.findIndex((video) => video.classList.contains('is-active')));
+      const nextIdx = (currentIdx + 1) % videos.length;
+
+      videos[currentIdx].pause();
+      videos[currentIdx].currentTime = 0;
+      videos[currentIdx].classList.remove('is-active');
+
+      videos[nextIdx].classList.add('is-active');
+      playFromStart(videos[nextIdx]);
+      scheduleThemeCarousel(mediaEl);
+    }
+
     function playActiveThemeVideo() {
+      stopThemeCarouselTimer();
       showcaseMediaEls.forEach((el, i) => {
-        const v = el.querySelector('video');
-        if (!v) return;
+        const videos = Array.from(el.querySelectorAll('video'));
+        if (!videos.length) return;
         if (i === activeTheme) {
-          v.currentTime = 0;
-          v.play().catch(()=>{});
+          const activeVideo = videos[0];
+          videos.forEach((video) => {
+            if (video === activeVideo) video.classList.add('is-active');
+            else {
+              video.classList.remove('is-active');
+              video.pause();
+              video.currentTime = 0;
+            }
+          });
+          playFromStart(activeVideo);
+          if (videos.length > 1) scheduleThemeCarousel(el);
         } else {
-          v.pause();
+          videos.forEach((video) => video.pause());
         }
       });
     }
@@ -1002,7 +1092,9 @@
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
+      resizeTimer = setTimeout(() => {
+        if (hasScrollTrigger) ScrollTrigger.refresh();
+      }, 200);
     });
 
     console.log('%c HONO IA — Build Carregado','background:#FF2D00;color:#000;padding:4px 8px;font-weight:bold;');
