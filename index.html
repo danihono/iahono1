@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>HONO IA — Cinema Tech</title>
+  <meta name="description" content="Hono IA — landing pages, sistemas e conteúdos com IA.">
+
+  <link rel="preload" as="video" href="/assets/video-01.mp4" type="video/mp4">
+  <link rel="preload" as="video" href="/assets/video-02.mp4" type="video/mp4">
+  <link rel="preload" as="image" href="/assets/video-01-lastframe.jpg">
+  <link rel="preload" as="image" href="/assets/img.png">
+  <link rel="preload" as="image" href="/assets/landing-take-01-poster.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Anton&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #000000;
+      --fg: #f5f0eb;
+      --muted: rgba(245, 240, 235, 0.55);
+      --muted-strong: rgba(245, 240, 235, 0.75);
+      --fire-red: #FF2D00;
+      --neon-orange: #FF6B00;
+      --hot-magenta: #FF008C;
+      --warm-amber: #FFB800;
+
+      --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+      --font-heavy: 'Anton', 'Inter', sans-serif;
+
+      --ease-primary: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-fade: 600ms;
+      --dur-swap: 500ms;
+      --dur-quick: 200ms;
+
+      --pad-edge: clamp(20px, 2.5vw, 40px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body.is-locked { overflow: hidden; height: 100vh; }
+
+    ::selection { background: var(--fire-red); color: var(--bg); }
+    a { color: inherit; text-decoration: none; }
+
+    /* HEADER */
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      padding: 0 var(--pad-edge);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 600ms var(--ease-primary);
+    }
+    .site-header.is-visible { opacity: 1; pointer-events: auto; }
+    .site-header__left, .site-header__right { display: flex; gap: 28px; align-items: center; }
+    .site-header__link {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--fg);
+      transition: opacity var(--dur-quick);
+    }
+    .site-header__link sup {
+      font-size: 10px;
+      vertical-align: super;
+      opacity: 0.6;
+      margin-left: 2px;
+    }
+    .site-header__link:hover { opacity: 0.6; }
+    .site-header__logo {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--fg);
+    }
+    .site-header__logo svg { width: 22px; height: 22px; fill: currentColor; }
+
+    /* FOOTER */
+    .site-footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 44px;
+      padding: 0 var(--pad-edge);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 600ms var(--ease-primary);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .site-footer.is-visible { opacity: 1; pointer-events: auto; }
+    .site-footer__center, .site-footer__right { display: flex; gap: 18px; }
+    .site-footer a { color: var(--muted); transition: color var(--dur-quick); }
+    .site-footer a:hover { color: var(--fg); }
+
+    /* SECTION 01 */
+    #section-01 { position: relative; width: 100%; height: 300vh; background: var(--bg); }
+    .zoom-stage { position: relative; width: 100%; height: 100vh; overflow: hidden; background: var(--bg); }
+    .video-01 {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 10;
+      background: var(--bg);
+    }
+    .v1-poster {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 100ms linear;
+    }
+    .v1-poster.is-visible { opacity: 1; }
+    .v2-poster {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 16;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms linear;
+    }
+    .v2-poster.is-visible { opacity: 1; }
+    .v2-poster.is-hidden { opacity: 0; }
+    .video-02 {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 15;
+      opacity: 0;
+      will-change: opacity;
+    }
+    .video-02.is-active { opacity: 1; }
+
+    /* Scroll cue */
+    .scroll-cue {
+      position: absolute;
+      bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 400ms var(--ease-primary);
+    }
+    .scroll-cue.is-visible {
+      opacity: 1;
+      animation: scrollBob 1800ms ease-in-out infinite;
+    }
+    .scroll-cue.is-hidden { opacity: 0; animation: none; }
+    @keyframes scrollBob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(6px); }
+    }
+    .scroll-cue__chevron svg {
+      width: 24px; height: 24px;
+      stroke: var(--fg); stroke-width: 1.5; fill: none;
+    }
+    .scroll-cue__label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Unmute */
+    .unmute-btn {
+      position: fixed; bottom: 80px; right: var(--pad-edge); z-index: 110;
+      background: rgba(0,0,0,0.6); color: var(--fg);
+      border: 1px solid rgba(245,240,235,0.2);
+      padding: 8px 14px;
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 300ms, background 200ms;
+    }
+    .unmute-btn.is-visible { opacity: 1; pointer-events: auto; }
+    .unmute-btn:hover { background: rgba(255, 45, 0, 0.8); border-color: var(--fire-red); }
+
+    /* ============================================================
+       SECTION 02 — Showcase Major-style
+       ============================================================ */
+    #section-02 {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .showcase-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .showcase-media {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--dur-fade) var(--ease-primary);
+      z-index: 0;
+    }
+    .showcase-media.is-active { opacity: 1; }
+    .showcase-media video,
+    .showcase-media img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Película */
+    .showcase-film {
+      position: absolute; inset: 0; pointer-events: none; z-index: 5;
+      background:
+        radial-gradient(ellipse 120% 100% at 50% 50%,
+          rgba(0,0,0,0) 40%,
+          rgba(0,0,0,0.4) 100%),
+        rgba(0, 0, 0, 0.32);
+    }
+
+    /* Gradient legibilidade */
+    .showcase-gradient {
+      position: absolute; inset: 0; pointer-events: none; z-index: 6;
+      background: linear-gradient(180deg,
+        rgba(0,0,0,0.5) 0%,
+        rgba(0,0,0,0) 18%,
+        rgba(0,0,0,0) 82%,
+        rgba(0,0,0,0.5) 100%);
+    }
+
+    /* Título mega gigante centralizado */
+    .showcase-title-link {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0 var(--pad-edge);
+    }
+    .showcase-title {
+      font-family: var(--font-heavy);
+      font-weight: 400;
+      font-size: clamp(80px, 16vw, 280px);
+      line-height: 0.85;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      color: var(--fg);
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: none;
+      transition:
+        opacity var(--dur-swap) var(--ease-primary),
+        transform var(--dur-swap) var(--ease-primary),
+        text-shadow var(--dur-quick) var(--ease-primary);
+    }
+    .showcase-title.is-exiting {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    .showcase-title.is-entering {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .showcase-title-link:hover .showcase-title {
+      text-shadow: 0 0 40px rgba(255, 45, 0, 0.4);
+    }
+
+    /* Meta esquerda */
+    .showcase-meta-left {
+      position: absolute;
+      bottom: 64px; left: var(--pad-edge);
+      z-index: 25;
+      font-size: 17px;
+      color: var(--fg);
+      transition: opacity var(--dur-swap) var(--ease-primary),
+                  transform var(--dur-swap) var(--ease-primary);
+    }
+    .showcase-meta-left.is-exiting { opacity: 0; transform: translateY(-12px); }
+    .showcase-meta-left.is-entering { opacity: 0; transform: translateY(12px); }
+
+    /* Meta direita */
+    .showcase-meta-right {
+      position: absolute;
+      bottom: 64px; right: var(--pad-edge);
+      z-index: 25;
+      font-size: 17px;
+      color: var(--fg);
+      transition: opacity var(--dur-swap) var(--ease-primary),
+                  transform var(--dur-swap) var(--ease-primary);
+    }
+    .showcase-meta-right.is-exiting { opacity: 0; transform: translateY(-12px); }
+    .showcase-meta-right.is-entering { opacity: 0; transform: translateY(12px); }
+
+    /* Progress bar fininha */
+    .showcase-progress {
+      position: absolute;
+      bottom: 44px;
+      left: var(--pad-edge); right: var(--pad-edge);
+      height: 2px;
+      z-index: 24;
+      display: flex;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .showcase-progress__cell {
+      flex: 1;
+      background: rgba(245, 240, 235, 0.15);
+      transition: background var(--dur-fade) var(--ease-primary);
+    }
+    .showcase-progress__cell.is-active { background: var(--fire-red); }
+
+    /* CTA dica de click */
+    .showcase-cta-hint {
+      position: absolute;
+      top: calc(50% + clamp(70px, 10vw, 180px));
+      left: 50%; transform: translateX(-50%);
+      z-index: 21;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms var(--ease-primary);
+    }
+    .showcase-stage:hover .showcase-cta-hint { opacity: 0.6; }
+
+    .case-section {
+      min-height: 100vh;
+      padding: 160px var(--pad-edge);
+      background: var(--bg);
+      color: var(--fg);
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      border-top: 1px solid rgba(245, 240, 235, 0.12);
+    }
+    .case-section h3 {
+      font-family: var(--font-heavy);
+      font-size: clamp(56px, 11vw, 180px);
+      line-height: 0.88;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+    .case-section p {
+      max-width: 560px;
+      font-size: clamp(18px, 2vw, 28px);
+      color: var(--muted-strong);
+    }
+
+    /* CUT OVERLAY — landing fixo */
+    #cut-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      background: var(--bg);
+    }
+    #cut-overlay.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #cut-overlay video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #cut-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      background: rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+    }
+    .cut-title-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cut-title,
+    .cut-meta-left,
+    .cut-meta-right {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    #cut-overlay.is-active .cut-title {
+      animation: cutIn 700ms 80ms var(--ease-primary) forwards;
+    }
+    #cut-overlay.is-active .cut-meta-left {
+      animation: cutIn 700ms 200ms var(--ease-primary) forwards;
+    }
+    #cut-overlay.is-active .cut-meta-right {
+      animation: cutIn 700ms 260ms var(--ease-primary) forwards;
+    }
+    @keyframes cutIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* INTRO OVERLAY */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: var(--bg);
+      opacity: 1;
+      transition: opacity 900ms var(--ease-primary);
+    }
+    #intro-overlay.is-fading {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #intro-overlay video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #intro-skip {
+      position: absolute;
+      bottom: var(--pad-edge);
+      right: var(--pad-edge);
+      background: rgba(0,0,0,0.55);
+      color: var(--fg);
+      border: 1px solid rgba(245,240,235,0.25);
+      padding: 8px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 400ms var(--ease-primary), background 200ms;
+    }
+    #intro-skip.is-visible { opacity: 1; pointer-events: auto; }
+    #intro-skip:hover { background: rgba(255,45,0,0.85); border-color: var(--fire-red); }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-cue.is-visible { animation: none; }
+      *, *::before, *::after { transition-duration: 0.01ms !important; }
+    }
+
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--fire-red);
+      outline-offset: 4px;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .showcase-title {
+        font-size: clamp(56px, 18vw, 120px);
+        white-space: normal;
+        line-height: 0.9;
+      }
+      .showcase-meta-left, .showcase-meta-right {
+        font-size: 13px;
+        bottom: 80px;
+      }
+      .showcase-progress { bottom: 56px; }
+      .site-header__left, .site-header__right { gap: 16px; }
+      .site-header__link { font-size: 12px; }
+      .site-header__link sup { display: none; }
+    }
+  </style>
+</head>
+<body class="is-locked">
+
+  <div id="cut-overlay">
+    <video id="cut-video" src="/assets/landing-take-01.mp4"
+           loop muted playsinline preload="auto"
+           poster="/assets/landing-take-01-poster.jpg"></video>
+    <div class="showcase-film"></div>
+    <div class="showcase-gradient"></div>
+    <div class="cut-title-wrap">
+      <h2 class="cut-title showcase-title">LANDING PAGES</h2>
+    </div>
+    <div class="cut-meta-left showcase-meta-left">
+      <span>Sites premium que convertem</span>
+    </div>
+    <div class="cut-meta-right showcase-meta-right">
+      <span>01 / 03</span>
+    </div>
+  </div>
+
+  <div id="intro-overlay">
+    <video id="intro-video" src="/assets/B40BCBB8-6011-4156-A761-E491D480E974.mov" playsinline preload="auto"></video>
+    <button id="intro-skip" type="button">PULAR</button>
+  </div>
+
+  <header class="site-header" id="site-header">
+    <div class="site-header__left">
+      <a href="#section-02" class="site-header__link">Trabalhos<sup>[3]</sup></a>
+      <a href="/portfolio" class="site-header__link">Portfolio<sup>[12]</sup></a>
+    </div>
+    <a href="/" class="site-header__logo" aria-label="Hono IA">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z"/>
+      </svg>
+    </a>
+    <div class="site-header__right">
+      <a href="/sobre" class="site-header__link">Sobre</a>
+      <a href="mailto:contato@hono.ia" class="site-header__link">Contato</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="section-01">
+      <div class="zoom-stage" id="zoom-stage">
+        <video class="video-01" id="video-01" src="/assets/video-01.mp4" playsinline preload="auto"></video>
+        <video class="video-02" id="video-02" src="/assets/video-02.mp4" muted playsinline preload="auto"></video>
+        <img class="v1-poster" id="v1-poster" src="/assets/video-01-lastframe.jpg" alt="" aria-hidden="true">
+        <img class="v2-poster" id="v2-poster" src="/assets/img.png" alt="" aria-hidden="true">
+
+        <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+          <div class="scroll-cue__chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <span class="scroll-cue__label">scroll</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-02">
+      <div class="showcase-stage" id="showcase-stage">
+
+        <div class="showcase-media is-active" data-theme="0">
+          <video src="/assets/landing-take-01.mp4"
+                 poster="/assets/landing-take-01-poster.jpg"
+                 loop muted playsinline preload="auto"></video>
+        </div>
+        <div class="showcase-media" data-theme="1">
+          <video src="/assets/video-02.mp4"
+                 poster="/assets/img.png"
+                 loop muted playsinline preload="auto"></video>
+        </div>
+        <div class="showcase-media" data-theme="2">
+          <video src="/assets/landing-take-01.mp4"
+                 poster="/assets/landing-take-01-poster.jpg"
+                 loop muted playsinline preload="auto"></video>
+        </div>
+
+        <div class="showcase-film"></div>
+        <div class="showcase-gradient"></div>
+
+        <a href="#case-landing-pages" class="showcase-title-link" id="showcase-title-link">
+          <h2 class="showcase-title" id="showcase-title">LANDING PAGES</h2>
+        </a>
+        <span class="showcase-cta-hint">clique para ver o caso</span>
+
+        <div class="showcase-meta-left" id="showcase-meta-left">
+          <span id="showcase-subtitle">Sites premium que convertem</span>
+        </div>
+
+        <div class="showcase-meta-right" id="showcase-meta-right">
+          <span id="showcase-number">01 / 03</span>
+        </div>
+
+        <div class="showcase-progress" id="showcase-progress">
+          <div class="showcase-progress__cell is-active" data-cell="0"></div>
+          <div class="showcase-progress__cell" data-cell="1"></div>
+          <div class="showcase-progress__cell" data-cell="2"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="case-section" id="case-landing-pages">
+      <h3>LANDING PAGES</h3>
+      <p>Sites premium que convertem</p>
+    </section>
+
+    <section class="case-section" id="case-sistemas">
+      <h3>SISTEMAS</h3>
+      <p>Plataformas que escalam</p>
+    </section>
+
+    <section class="case-section" id="case-conteudos-ia">
+      <h3>CONTEUDOS IA</h3>
+      <p>Videos e imagens com IA</p>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="site-footer">
+    <div class="site-footer__left">© Hono IA — Todos os direitos reservados.</div>
+    <div class="site-footer__center">
+      <a href="#" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+    <div class="site-footer__right">
+      <a href="/politica">Privacidade</a>
+      <a href="/termos">Termos</a>
+    </div>
+  </footer>
+
+  <button class="unmute-btn" id="unmute-btn" type="button" aria-label="Ativar áudio">
+    🔊 Ativar áudio
+  </button>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const body          = document.body;
+    const cutOverlay    = document.getElementById('cut-overlay');
+    const cutVideo      = document.getElementById('cut-video');
+    const introOverlay  = document.getElementById('intro-overlay');
+    const introVideo    = document.getElementById('intro-video');
+    const introSkip     = document.getElementById('intro-skip');
+    const video01       = document.getElementById('video-01');
+    const video02       = document.getElementById('video-02');
+    const v1Poster      = document.getElementById('v1-poster');
+    const v2Poster      = document.getElementById('v2-poster');
+    const scrollCue     = document.getElementById('scroll-cue');
+    const siteHeader    = document.getElementById('site-header');
+    const siteFooter    = document.getElementById('site-footer');
+    const unmuteBtn     = document.getElementById('unmute-btn');
+    const zoomStage     = document.getElementById('zoom-stage');
+
+    const showcaseTitle = document.getElementById('showcase-title');
+    const showcaseSubtitle = document.getElementById('showcase-subtitle');
+    const showcaseNumber = document.getElementById('showcase-number');
+    const showcaseTitleLink = document.getElementById('showcase-title-link');
+    const showcaseMediaEls = document.querySelectorAll('.showcase-media');
+    const showcaseMetaLeft = document.getElementById('showcase-meta-left');
+    const showcaseMetaRight = document.getElementById('showcase-meta-right');
+    const progressCells = document.querySelectorAll('.showcase-progress__cell');
+
+    const themes = [
+      { id: 'landing',   title: 'LANDING PAGES', subtitle: 'Sites premium que convertem', number: '01 / 03', href: '#case-landing-pages' },
+      { id: 'sistemas',  title: 'SISTEMAS',      subtitle: 'Plataformas que escalam',     number: '02 / 03', href: '#case-sistemas' },
+      { id: 'conteudos', title: 'CONTEUDOS IA',  subtitle: 'Videos e imagens com IA',     number: '03 / 03', href: '#case-conteudos-ia' },
+    ];
+
+    let activeTheme = 0;
+
+    // SCROLL LOCK (Act 1)
+    let scrollLockEnabled = true;
+    const preventScroll = (e) => {
+      if (scrollLockEnabled) { e.preventDefault(); e.stopPropagation(); return false; }
+    };
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('keydown', (e) => {
+      if (!scrollLockEnabled) return;
+      const blocked = ['ArrowDown','ArrowUp','PageDown','PageUp','Space',' ','Home','End'];
+      if (blocked.includes(e.key)) e.preventDefault();
+    });
+
+    const tryPlayWithAudio = async () => {
+      try {
+        introVideo.muted = false;
+        introVideo.volume = 1.0;
+        await introVideo.play();
+      } catch (err) {
+        introVideo.muted = true;
+        try { await introVideo.play(); } catch (e2) {}
+        unmuteBtn.classList.add('is-visible');
+      }
+    };
+    unmuteBtn.addEventListener('click', () => {
+      introVideo.muted = false;
+      introVideo.volume = 1.0;
+      unmuteBtn.classList.remove('is-visible');
+    });
+    tryPlayWithAudio();
+
+    // Mostra botão de pular após 2s
+    setTimeout(() => introSkip.classList.add('is-visible'), 2000);
+
+    let act1Done = false;
+    const INTRO_END_EARLY_SEC = 3.0;
+    const endAct1 = () => {
+      if (act1Done) return;
+      act1Done = true;
+      introSkip.classList.remove('is-visible');
+      unmuteBtn.classList.remove('is-visible');
+      try { introVideo.pause(); } catch (e) {}
+
+      // Fade out do overlay
+      introOverlay.classList.add('is-fading');
+      setTimeout(() => {
+        introOverlay.style.display = 'none';
+        v1Poster.classList.remove('is-visible');
+        v2Poster.classList.add('is-visible');
+        scrollLockEnabled = false;
+        body.classList.remove('is-locked');
+        setTimeout(() => {
+          siteHeader.classList.add('is-visible');
+          siteFooter.classList.add('is-visible');
+        }, 200);
+        setTimeout(() => scrollCue.classList.add('is-visible'), 400);
+      }, 900);
+    };
+    introVideo.addEventListener('timeupdate', () => {
+      if (act1Done || !introVideo.duration || isNaN(introVideo.duration)) return;
+      if ((introVideo.duration - introVideo.currentTime) <= INTRO_END_EARLY_SEC) endAct1();
+    });
+    introVideo.addEventListener('ended', endAct1);
+    introSkip.addEventListener('click', endAct1);
+    // Fallback caso o vídeo não carregue
+    setTimeout(endAct1, 20000);
+
+    let escTimer = null;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !escTimer && !act1Done) {
+        escTimer = setTimeout(() => endAct1(), 1500);
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Escape' && escTimer) { clearTimeout(escTimer); escTimer = null; }
+    });
+
+    // CORTE — landing fixo quando video-02 vai pra tela preta
+    const BLACK_CUTOFF_SEC = 1.2; // segundos antes do fim que faz o corte
+    let cutDone = false;
+    let showcaseHijackActive = false;
+    let wheelLockedUntil = 0;
+    let section02PinTrigger = null;
+    const doCut = () => {
+      if (cutDone) return;
+      cutDone = true;
+      cutOverlay.classList.remove('is-active');
+      showcaseHijackActive = true;
+      switchTheme(0, true);
+      document.getElementById('section-02').scrollIntoView({ block: 'start' });
+    };
+
+    // ACT 3 — Scroll-scrub
+    const SCREEN_ORIGIN_X = 50, SCREEN_ORIGIN_Y = 42, MAX_SCALE = 1.3;
+    const VIDEO02_IMAGE_COVER_SEC = 1.0;
+    let scrolledOnce = false;
+    const onFirstScroll = () => {
+      if (scrolledOnce || !act1Done) return;
+      scrolledOnce = true;
+      scrollCue.classList.remove('is-visible');
+      scrollCue.classList.add('is-hidden');
+    };
+    window.addEventListener('scroll', onFirstScroll, { passive: true });
+    window.addEventListener('wheel', () => { if (act1Done) onFirstScroll(); }, { passive: true });
+
+    ScrollTrigger.create({
+      trigger: '#section-01',
+      start: 'top top',
+      end: '+=200%',
+      pin: '.zoom-stage',
+      pinSpacing: true,
+      scrub: 0.5,
+      onUpdate: (self) => {
+        const p = self.progress;
+        if (p > 0.001) {
+          if (v1Poster.classList.contains('is-visible')) v1Poster.classList.remove('is-visible');
+          if (!video02.classList.contains('is-active')) video02.classList.add('is-active');
+          if (video02.duration && !isNaN(video02.duration)) {
+            const t = video02.duration * p;
+            if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
+            v2Poster.classList.toggle('is-visible', t <= VIDEO02_IMAGE_COVER_SEC);
+            // Corte: quando sobra menos de BLACK_CUTOFF_SEC, vai pra tela preta → corta
+            if (!cutDone && (video02.duration - t) <= BLACK_CUTOFF_SEC) doCut();
+          } else {
+            v2Poster.classList.add('is-visible');
+          }
+          if (!scrolledOnce) onFirstScroll();
+        } else {
+          v1Poster.classList.remove('is-visible');
+          v2Poster.classList.add('is-visible');
+          video02.classList.remove('is-active');
+        }
+        const scale = 1 + (MAX_SCALE - 1) * p;
+        zoomStage.style.transformOrigin = `${SCREEN_ORIGIN_X}% ${SCREEN_ORIGIN_Y}%`;
+        zoomStage.style.transform = `scale(${scale})`;
+      },
+      onEnter:     () => zoomStage.style.willChange = 'transform',
+      onLeave:     () => zoomStage.style.willChange = 'auto',
+      onEnterBack: () => zoomStage.style.willChange = 'transform',
+      onLeaveBack: () => zoomStage.style.willChange = 'auto',
+    });
+
+    // ============================================================
+    // SECTION 02 — Scroll hijack
+    // ============================================================
+    // Cria pin manual da Section 02 quando ela entra
+    section02PinTrigger = ScrollTrigger.create({
+      trigger: '#section-02',
+      start: 'top top',
+      end: 'bottom top',
+      pin: '#section-02',
+      pinSpacing: false,
+      onEnter: () => {
+        showcaseHijackActive = true;
+        switchTheme(0, true);
+        playActiveThemeVideo();
+      },
+      onEnterBack: () => {
+        showcaseHijackActive = true;
+        switchTheme(themes.length - 1, true);
+        playActiveThemeVideo();
+      },
+      onLeave: () => { showcaseHijackActive = false; },
+      onLeaveBack: () => { showcaseHijackActive = false; },
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if (!showcaseHijackActive) return;
+      if (Date.now() < wheelLockedUntil) { e.preventDefault(); return; }
+      const direction = e.deltaY > 0 ? 1 : -1;
+
+      // último tema + scroll down → libera
+      if (direction > 0 && activeTheme === themes.length - 1) {
+        e.preventDefault();
+        switchTheme(0);
+        wheelLockedUntil = Date.now() + 650;
+        return;
+      }
+      // primeiro tema + scroll up → wrap around (loop circular)
+      if (direction < 0 && activeTheme === 0) {
+        e.preventDefault();
+        switchTheme(themes.length - 1);
+        wheelLockedUntil = Date.now() + 650;
+        return;
+      }
+      // troca normal
+      const next = activeTheme + direction;
+      if (next >= 0 && next < themes.length) {
+        e.preventDefault();
+        switchTheme(next);
+        wheelLockedUntil = Date.now() + 650;
+      }
+    }, { passive: false });
+
+    // Touch
+    let touchStartY = null;
+    window.addEventListener('touchstart', (e) => {
+      if (!showcaseHijackActive) return;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (!showcaseHijackActive || touchStartY === null) return;
+      if (Date.now() < wheelLockedUntil) { e.preventDefault(); return; }
+      const dy = touchStartY - e.touches[0].clientY;
+      if (Math.abs(dy) < 30) return;
+      const direction = dy > 0 ? 1 : -1;
+
+      if (direction > 0 && activeTheme === themes.length - 1) {
+        e.preventDefault();
+        switchTheme(0);
+        wheelLockedUntil = Date.now() + 650;
+        touchStartY = null;
+        return;
+      }
+      if (direction < 0 && activeTheme === 0) {
+        e.preventDefault();
+        switchTheme(themes.length - 1);
+        wheelLockedUntil = Date.now() + 650;
+        touchStartY = null;
+        return;
+      }
+      const next = activeTheme + direction;
+      if (next >= 0 && next < themes.length) {
+        e.preventDefault();
+        switchTheme(next);
+        wheelLockedUntil = Date.now() + 650;
+        touchStartY = null;
+      }
+    }, { passive: false });
+
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+      if (!showcaseHijackActive) return;
+      if (Date.now() < wheelLockedUntil) return;
+      if (['ArrowDown','PageDown',' '].includes(e.key)) {
+        if (activeTheme < themes.length - 1) {
+          e.preventDefault();
+          switchTheme(activeTheme + 1);
+          wheelLockedUntil = Date.now() + 650;
+        } else {
+          e.preventDefault();
+          switchTheme(0);
+          wheelLockedUntil = Date.now() + 650;
+        }
+      } else if (['ArrowUp','PageUp'].includes(e.key)) {
+        e.preventDefault();
+        if (activeTheme > 0) switchTheme(activeTheme - 1);
+        else switchTheme(themes.length - 1);
+        wheelLockedUntil = Date.now() + 650;
+      }
+    });
+
+    function switchTheme(newIdx, instant = false) {
+      if (newIdx === activeTheme && !instant) return;
+      activeTheme = newIdx;
+      const theme = themes[newIdx];
+
+      // Mídia cross-fade
+      showcaseMediaEls.forEach((el, i) => {
+        if (i === newIdx) el.classList.add('is-active');
+        else el.classList.remove('is-active');
+      });
+      playActiveThemeVideo();
+
+      if (instant) {
+        showcaseTitle.textContent = theme.title;
+        showcaseSubtitle.textContent = theme.subtitle;
+        showcaseNumber.textContent = theme.number;
+        showcaseTitleLink.setAttribute('href', theme.href);
+        updateProgress();
+        return;
+      }
+
+      // Stagger swap
+      showcaseTitle.classList.add('is-exiting');
+      showcaseMetaLeft.classList.add('is-exiting');
+      showcaseMetaRight.classList.add('is-exiting');
+
+      setTimeout(() => {
+        showcaseTitle.textContent = theme.title;
+        showcaseSubtitle.textContent = theme.subtitle;
+        showcaseNumber.textContent = theme.number;
+        showcaseTitleLink.setAttribute('href', theme.href);
+
+        showcaseTitle.classList.remove('is-exiting');
+        showcaseTitle.classList.add('is-entering');
+        showcaseMetaLeft.classList.remove('is-exiting');
+        showcaseMetaLeft.classList.add('is-entering');
+        showcaseMetaRight.classList.remove('is-exiting');
+        showcaseMetaRight.classList.add('is-entering');
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            showcaseTitle.classList.remove('is-entering');
+            showcaseMetaLeft.classList.remove('is-entering');
+            showcaseMetaRight.classList.remove('is-entering');
+          });
+        });
+
+        updateProgress();
+      }, 280);
+    }
+
+    function updateProgress() {
+      progressCells.forEach((cell, i) => {
+        if (i === activeTheme) cell.classList.add('is-active');
+        else cell.classList.remove('is-active');
+      });
+    }
+
+    function playActiveThemeVideo() {
+      showcaseMediaEls.forEach((el, i) => {
+        const v = el.querySelector('video');
+        if (!v) return;
+        if (i === activeTheme) {
+          v.currentTime = 0;
+          v.play().catch(()=>{});
+        } else {
+          v.pause();
+        }
+      });
+    }
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
+    });
+
+    console.log('%c HONO IA — Build Carregado','background:#FF2D00;color:#000;padding:4px 8px;font-weight:bold;');
+  </script>
+</body>
+</html>
