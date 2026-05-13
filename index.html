@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>HONO IA — Cinema Tech</title>
+  <link rel="icon" href="assets/logo.jpeg" type="image/jpeg">
   <meta name="description" content="Hono IA — landing pages, sistemas e conteúdos com IA.">
 
   <link rel="preload" as="image" href="assets/video-01-lastframe.jpg">
@@ -72,27 +73,81 @@
       transition: opacity 600ms var(--ease-primary);
     }
     .site-header.is-visible { opacity: 1; pointer-events: auto; }
-    .site-header__left, .site-header__right { display: flex; gap: 28px; align-items: center; }
-    .site-header__link {
-      font-family: var(--font-display);
-      font-size: 14px;
-      color: var(--fg);
+
+    .site-header__logo {
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      padding: 0;
       transition: opacity var(--dur-quick);
     }
-    .site-header__link sup {
-      font-size: 10px;
-      vertical-align: super;
-      opacity: 0.6;
-      margin-left: 2px;
+    .site-header__logo:hover { opacity: 0.7; }
+    .site-header__logo img {
+      height: 32px;
+      width: 32px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
     }
-    .site-header__link:hover { opacity: 0.6; }
-    .site-header__logo {
+
+    .site-header__nav {
       position: absolute;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      color: var(--fg);
+      display: flex;
+      gap: 40px;
+      align-items: center;
     }
-    .site-header__logo svg { width: 22px; height: 22px; fill: currentColor; }
+
+    .site-header__link {
+      font-family: var(--font-display);
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--fg);
+      transition: opacity var(--dur-quick);
+    }
+    .site-header__link:hover { opacity: 0.5; }
+
+    .site-header__actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .site-header__cta {
+      font-family: var(--font-display);
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--fg);
+      border: 1px solid rgba(245, 240, 235, 0.38);
+      padding: 7px 22px;
+      transition: border-color var(--dur-quick), background var(--dur-quick);
+    }
+    .site-header__cta:hover { border-color: var(--fg); background: rgba(245,240,235,0.04); }
+
+    .site-header__menu-btn {
+      background: none;
+      border: 1px solid rgba(245, 240, 235, 0.32);
+      cursor: pointer;
+      color: var(--fg);
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color var(--dur-quick);
+    }
+    .site-header__menu-btn:hover { border-color: var(--fg); }
+    .site-header__menu-btn svg { width: 17px; height: 17px; }
 
     /* FOOTER */
     .site-footer {
@@ -508,9 +563,10 @@
         bottom: 80px;
       }
       .showcase-progress { bottom: 56px; }
-      .site-header__left, .site-header__right { gap: 16px; }
-      .site-header__link { font-size: 12px; }
-      .site-header__link sup { display: none; }
+      .site-header__nav { gap: 22px; }
+      .site-header__link { font-size: 10px; letter-spacing: 0.1em; }
+      .site-header__cta { padding: 6px 14px; font-size: 10px; }
+      .hero-bg-title { font-size: clamp(80px, 24vw, 200px); }
     }
   </style>
 </head>
@@ -539,18 +595,23 @@
   </div>
 
   <header class="site-header" id="site-header">
-    <div class="site-header__left">
-      <a href="#section-02" class="site-header__link">Trabalhos<sup>[3]</sup></a>
-      <a href="/portfolio" class="site-header__link">Portfolio<sup>[12]</sup></a>
-    </div>
-    <a href="/" class="site-header__logo" aria-label="Hono IA">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z"/>
-      </svg>
-    </a>
-    <div class="site-header__right">
-      <a href="/sobre" class="site-header__link">Sobre</a>
-      <a href="mailto:contato@hono.ia" class="site-header__link">Contato</a>
+    <button class="site-header__logo" id="logo-btn" aria-label="Voltar ao início" type="button">
+      <img src="assets/logo.jpeg" alt="Hono IA">
+    </button>
+    <nav class="site-header__nav" aria-label="Navegação">
+      <a href="#section-02" class="site-header__link">TRABALHOS</a>
+      <a href="/portfolio" class="site-header__link">PORTFÓLIO</a>
+      <a href="/sobre" class="site-header__link">SOBRE</a>
+    </nav>
+    <div class="site-header__actions">
+      <a href="mailto:contato@hono.ia" class="site-header__cta">CONTATO</a>
+      <button class="site-header__menu-btn" aria-label="Menu" type="button">
+        <svg viewBox="0 0 24 24" fill="none">
+          <line x1="3" y1="7" x2="21" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="3" y1="17" x2="21" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -580,8 +641,7 @@
                  loop muted playsinline preload="auto"></video>
         </div>
         <div class="showcase-media" data-theme="1">
-          <video src="assets/video-02.mp4"
-                 poster="assets/img.png"
+          <video src="assets/sistemas.mp4"
                  loop muted playsinline preload="auto"></video>
         </div>
         <div class="showcase-media" data-theme="2">
@@ -770,7 +830,7 @@
     });
 
     // CORTE — landing fixo quando video-02 vai pra tela preta
-    const BLACK_CUTOFF_SEC = 1.2; // segundos antes do fim que considera tela preta
+    const BLACK_CUTOFF_SEC = 2; // segundos antes do fim que considera tela preta
     const BLACK_CUT_DELAY_MS = 2000; // espera no preto antes de ir para a landing
     let cutDone = false;
     let cutTimer = null;
@@ -791,12 +851,17 @@
     };
     const scheduleCut = () => {
       if (cutDone || cutTimer) return;
+      cutOverlay.classList.add('is-active');
+      cutVideo.currentTime = 0;
+      cutVideo.play().catch(() => {});
       cutTimer = setTimeout(doCut, BLACK_CUT_DELAY_MS);
     };
     const cancelScheduledCut = () => {
       if (!cutTimer) return;
       clearTimeout(cutTimer);
       cutTimer = null;
+      cutOverlay.classList.remove('is-active');
+      cutVideo.pause();
     };
     const preventCutDelayScroll = (e) => {
       if (!cutTimer || cutDone) return;
@@ -837,11 +902,11 @@
           if (v1Poster.classList.contains('is-visible')) v1Poster.classList.remove('is-visible');
           if (!video02.classList.contains('is-active')) video02.classList.add('is-active');
           if (video02.duration && !isNaN(video02.duration)) {
-            const t = video02.duration * p;
+            const t = video02.duration * Math.min(p, 0.68); // cap: nunca mostra os últimos 32% dos frames
             if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
             v2Poster.classList.toggle('is-visible', t <= VIDEO02_IMAGE_COVER_SEC);
-            // Corte: quando sobra menos de BLACK_CUTOFF_SEC, vai pra tela preta → corta
-            if (!cutDone && (video02.duration - t) <= BLACK_CUTOFF_SEC) scheduleCut();
+            // Corte por progresso (72% do scroll) ou por tempo restante
+            if (!cutDone && (p >= 0.72 || (video02.duration - t) <= BLACK_CUTOFF_SEC)) scheduleCut();
             else cancelScheduledCut();
           } else {
             v2Poster.classList.add('is-visible');
@@ -1095,6 +1160,24 @@
       resizeTimer = setTimeout(() => {
         if (hasScrollTrigger) ScrollTrigger.refresh();
       }, 200);
+    });
+
+    // Logo → reinicia intro
+    document.getElementById('logo-btn').addEventListener('click', () => {
+      window.scrollTo({ top: 0 });
+      act1Done = false;
+      cutDone = false;
+      scrollLockEnabled = true;
+      body.classList.add('is-locked');
+      siteHeader.classList.remove('is-visible');
+      siteFooter.classList.remove('is-visible');
+      scrollCue.classList.remove('is-visible', 'is-hidden');
+      cutOverlay.classList.remove('is-active');
+      introOverlay.style.display = '';
+      introOverlay.classList.remove('is-fading');
+      introSkip.classList.remove('is-visible');
+      tryPlayIntro();
+      setTimeout(() => introSkip.classList.add('is-visible'), 2000);
     });
 
     console.log('%c HONO IA — Build Carregado','background:#FF2D00;color:#000;padding:4px 8px;font-weight:bold;');
