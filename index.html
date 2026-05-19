@@ -8,7 +8,7 @@
   <meta name="description" content="Hono IA — landing pages, sistemas e conteúdos com IA.">
 
   <link rel="preload" as="image" href="assets/video-01-lastframe.jpg">
-  <link rel="preload" as="image" href="assets/img.png">
+  <link rel="preload" as="image" href="assets/startup.png">
   <link rel="preload" as="image" href="assets/landing-take-01-poster.jpg">
   <link rel="preload" as="image" href="assets/intro-poster.jpg">
 
@@ -276,6 +276,7 @@
       position: absolute;
       inset: 0;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .showcase-media {
@@ -457,6 +458,18 @@
       opacity: 1;
       pointer-events: auto;
     }
+    #cut-overlay.is-black video,
+    #cut-overlay.is-black .cut-title-wrap,
+    #cut-overlay.is-black .cut-meta-left,
+    #cut-overlay.is-black .cut-meta-right {
+      display: none;
+    }
+    #cut-overlay.is-black {
+      pointer-events: none;
+    }
+    #cut-overlay.is-black::after {
+      background: #000;
+    }
     #cut-overlay video {
       position: absolute;
       inset: 0;
@@ -619,9 +632,9 @@
     <section id="section-01">
       <div class="zoom-stage" id="zoom-stage">
         <video class="video-01" id="video-01" src="assets/video-01.mp4" playsinline preload="auto"></video>
-        <video class="video-02" id="video-02" src="assets/video-02.mp4" muted playsinline preload="auto"></video>
+        <video class="video-02" id="video-02" src="assets/intro2.mp4" muted playsinline preload="auto" poster="assets/startup.png"></video>
         <img class="v1-poster" id="v1-poster" src="assets/video-01-lastframe.jpg" alt="" aria-hidden="true">
-        <img class="v2-poster" id="v2-poster" src="assets/img.png" alt="" aria-hidden="true">
+        <img class="v2-poster" id="v2-poster" src="assets/startup.png" alt="" aria-hidden="true">
 
         <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
           <div class="scroll-cue__chevron">
@@ -656,7 +669,7 @@
         <div class="showcase-film"></div>
         <div class="showcase-gradient"></div>
 
-        <a href="#case-landing-pages" class="showcase-title-link" id="showcase-title-link">
+        <a href="landing-pages/" class="showcase-title-link" id="showcase-title-link">
           <h2 class="showcase-title" id="showcase-title">LANDING PAGES</h2>
         </a>
         <span class="showcase-cta-hint">clique para ver o caso</span>
@@ -733,6 +746,7 @@
     const showcaseTitle = document.getElementById('showcase-title');
     const showcaseSubtitle = document.getElementById('showcase-subtitle');
     const showcaseNumber = document.getElementById('showcase-number');
+    const showcaseStage = document.getElementById('showcase-stage');
     const showcaseTitleLink = document.getElementById('showcase-title-link');
     const showcaseMediaEls = document.querySelectorAll('.showcase-media');
     const showcaseMetaLeft = document.getElementById('showcase-meta-left');
@@ -740,7 +754,7 @@
     const progressCells = document.querySelectorAll('.showcase-progress__cell');
 
     const themes = [
-      { id: 'landing',   title: 'LANDING PAGES', subtitle: 'Sites premium que convertem', number: '01 / 03', href: '#case-landing-pages' },
+      { id: 'landing',   title: 'LANDING PAGES', subtitle: 'Sites premium que convertem', number: '01 / 03', href: 'landing-pages/' },
       { id: 'sistemas',  title: 'SISTEMAS',      subtitle: 'Plataformas que escalam',     number: '02 / 03', href: '#case-sistemas' },
       { id: 'conteudos', title: 'CONTEUDOS IA',  subtitle: 'Videos e imagens com IA',     number: '03 / 03', href: '#case-conteudos-ia' },
     ];
@@ -762,17 +776,52 @@
       if (blocked.includes(e.key)) e.preventDefault();
     });
 
+    const INTRO_SOURCES = ['assets/intro.mp4', 'assets/intro2.mp4'];
+    let introIndex = 0;
+    let introAudioEnabled = true;
+    let introFallbackTimer = null;
+
+    const clearIntroFallback = () => {
+      if (introFallbackTimer) {
+        clearTimeout(introFallbackTimer);
+        introFallbackTimer = null;
+      }
+    };
+
+    const scheduleIntroFallback = () => {
+      clearIntroFallback();
+      introFallbackTimer = setTimeout(endAct1, 60000);
+    };
+
+    const setIntroSource = () => {
+      const nextSource = INTRO_SOURCES[introIndex];
+      if (introVideo.getAttribute('src') !== nextSource) {
+        introVideo.setAttribute('src', nextSource);
+        introVideo.load();
+      }
+      try { introVideo.currentTime = 0; } catch (e) {}
+    };
+
     const tryPlayIntro = async () => {
       try {
-        introVideo.muted = true;
+        setIntroSource();
+        scheduleIntroFallback();
+        introVideo.muted = !introAudioEnabled;
+        introVideo.volume = 1.0;
         await introVideo.play();
-        unmuteBtn.classList.add('is-visible');
+        unmuteBtn.classList.toggle('is-visible', !introAudioEnabled);
       } catch (err) {
+        if (introAudioEnabled) {
+          introAudioEnabled = false;
+          tryPlayIntro();
+          return;
+        }
         console.warn('Intro video nao conseguiu iniciar.', err);
         endAct1();
       }
     };
     unmuteBtn.addEventListener('click', () => {
+      introAudioEnabled = true;
       introVideo.muted = false;
       introVideo.volume = 1.0;
       unmuteBtn.classList.remove('is-visible');
@@ -786,6 +835,7 @@
     const endAct1 = () => {
       if (act1Done) return;
       act1Done = true;
+      clearIntroFallback();
       introSkip.classList.remove('is-visible');
       unmuteBtn.classList.remove('is-visible');
       try { introVideo.pause(); } catch (e) {}
@@ -805,18 +855,25 @@
         setTimeout(() => scrollCue.classList.add('is-visible'), 400);
       }, 900);
     };
+    const playNextIntro = () => {
+      if (act1Done) return;
+      if (introIndex < INTRO_SOURCES.length - 1) {
+        introIndex += 1;
+        tryPlayIntro();
+        return;
+      }
+      endAct1();
+    };
     introVideo.addEventListener('timeupdate', () => {
-      if (act1Done || !introVideo.duration || isNaN(introVideo.duration)) return;
+      if (act1Done || introIndex < INTRO_SOURCES.length - 1 || !introVideo.duration || isNaN(introVideo.duration)) return;
       if ((introVideo.duration - introVideo.currentTime) <= INTRO_END_EARLY_SEC) endAct1();
     });
-    introVideo.addEventListener('ended', endAct1);
+    introVideo.addEventListener('ended', playNextIntro);
     introVideo.addEventListener('error', () => {
       console.warn('Intro video nao carregou.', introVideo.error);
-      endAct1();
+      playNextIntro();
     });
     introSkip.addEventListener('click', endAct1);
-    // Fallback caso o vídeo não carregue
-    setTimeout(endAct1, 20000);
     tryPlayIntro();
 
     let escTimer = null;
@@ -830,8 +887,7 @@
     });
 
     // CORTE — landing fixo quando video-02 vai pra tela preta
-    const BLACK_CUTOFF_SEC = 2; // segundos antes do fim que considera tela preta
-    const BLACK_CUT_DELAY_MS = 2000; // espera no preto antes de ir para a landing
+    const BLACK_CUT_DELAY_MS = 1000; // espera no preto antes de ir para a landing
     let cutDone = false;
     let cutTimer = null;
     let showcaseHijackActive = false;
@@ -844,40 +900,41 @@
         clearTimeout(cutTimer);
         cutTimer = null;
       }
-      cutOverlay.classList.remove('is-active');
       showcaseHijackActive = true;
       switchTheme(0, true);
       document.getElementById('section-02').scrollIntoView({ block: 'start' });
+      playActiveThemeVideo();
+      cutOverlay.classList.remove('is-active', 'is-black');
     };
     const scheduleCut = () => {
       if (cutDone || cutTimer) return;
-      cutOverlay.classList.add('is-active');
-      cutVideo.currentTime = 0;
-      cutVideo.play().catch(() => {});
+      cutOverlay.classList.add('is-active', 'is-black');
+      cutVideo.pause();
       cutTimer = setTimeout(doCut, BLACK_CUT_DELAY_MS);
     };
     const cancelScheduledCut = () => {
       if (!cutTimer) return;
       clearTimeout(cutTimer);
       cutTimer = null;
-      cutOverlay.classList.remove('is-active');
+      cutOverlay.classList.remove('is-active', 'is-black');
       cutVideo.pause();
     };
-    const preventCutDelayScroll = (e) => {
-      if (!cutTimer || cutDone) return;
-      e.preventDefault();
-    };
-    window.addEventListener('wheel', preventCutDelayScroll, { passive: false });
-    window.addEventListener('touchmove', preventCutDelayScroll, { passive: false });
-    window.addEventListener('keydown', (e) => {
-      if (!cutTimer || cutDone) return;
-      const blocked = ['ArrowDown','ArrowUp','PageDown','PageUp','Space',' ','Home','End'];
-      if (blocked.includes(e.key)) e.preventDefault();
-    });
-
     // ACT 3 — Scroll-scrub
     const SCREEN_ORIGIN_X = 50, SCREEN_ORIGIN_Y = 42, MAX_SCALE = 1.3;
-    const VIDEO02_IMAGE_COVER_SEC = 1.0;
+    const REVERSE_ZOOM_END_SEC = 0.05;
+    const clamp01 = (value) => Math.max(0, Math.min(1, value));
+    const syncReverseZoomVideo = (progress) => {
+      if (!video02.duration || isNaN(video02.duration)) return false;
+      const startAt = Math.max(REVERSE_ZOOM_END_SEC, video02.duration - 0.05);
+      const endAt = Math.min(REVERSE_ZOOM_END_SEC, startAt);
+      const t = startAt + (endAt - startAt) * clamp01(progress);
+      if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
+      v2Poster.classList.remove('is-visible');
+      return true;
+    };
+    video02.addEventListener('loadedmetadata', () => {
+      syncReverseZoomVideo(0);
+    });
     let scrolledOnce = false;
     const onFirstScroll = () => {
       if (scrolledOnce || !act1Done) return;
@@ -901,14 +958,7 @@
         if (p > 0.001) {
           if (v1Poster.classList.contains('is-visible')) v1Poster.classList.remove('is-visible');
           if (!video02.classList.contains('is-active')) video02.classList.add('is-active');
-          if (video02.duration && !isNaN(video02.duration)) {
-            const t = video02.duration * Math.min(p, 0.68); // cap: nunca mostra os últimos 32% dos frames
-            if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
-            v2Poster.classList.toggle('is-visible', t <= VIDEO02_IMAGE_COVER_SEC);
-            // Corte por progresso (72% do scroll) ou por tempo restante
-            if (!cutDone && (p >= 0.72 || (video02.duration - t) <= BLACK_CUTOFF_SEC)) scheduleCut();
-            else cancelScheduledCut();
-          } else {
+          if (!syncReverseZoomVideo(p)) {
             v2Poster.classList.add('is-visible');
           }
           if (!scrolledOnce) onFirstScroll();
@@ -922,9 +972,18 @@
         zoomStage.style.transform = `scale(${scale})`;
       },
       onEnter:     () => zoomStage.style.willChange = 'transform',
-      onLeave:     () => zoomStage.style.willChange = 'auto',
-      onEnterBack: () => zoomStage.style.willChange = 'transform',
-      onLeaveBack: () => zoomStage.style.willChange = 'auto',
+      onLeave:     () => {
+        zoomStage.style.willChange = 'auto';
+        scheduleCut();
+      },
+      onEnterBack: () => {
+        zoomStage.style.willChange = 'transform';
+        cancelScheduledCut();
+      },
+      onLeaveBack: () => {
+        zoomStage.style.willChange = 'auto';
+        cancelScheduledCut();
+      },
       });
     }
 
@@ -1172,10 +1231,12 @@
       siteHeader.classList.remove('is-visible');
       siteFooter.classList.remove('is-visible');
       scrollCue.classList.remove('is-visible', 'is-hidden');
-      cutOverlay.classList.remove('is-active');
+      cutOverlay.classList.remove('is-active', 'is-black');
       introOverlay.style.display = '';
       introOverlay.classList.remove('is-fading');
       introSkip.classList.remove('is-visible');
+      introIndex = 0;
+      introAudioEnabled = true;
       tryPlayIntro();
       setTimeout(() => introSkip.classList.add('is-visible'), 2000);
     });
@@ -1183,6 +1244,10 @@
     showcaseTitleLink.addEventListener('click', (e) => {
       e.preventDefault();
       const href = showcaseTitleLink.getAttribute('href');
+      if (!href.startsWith('#')) {
+        window.location.href = href;
+        return;
+      }
       const target = document.querySelector(href);
       if (!target) return;
       showcaseHijackActive = false;
@@ -1190,6 +1255,11 @@
     });
 
     console.log('%c HONO IA — Build Carregado','background:#FF2D00;color:#000;padding:4px 8px;font-weight:bold;');
+    showcaseStage.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      if (themes[activeTheme].href !== 'landing-pages/') return;
+      window.location.href = 'landing-pages/';
+    });
   </script>
 </body>
 </html>

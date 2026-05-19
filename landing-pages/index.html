@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Atelier · Times Square | Hono IA</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Caveat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #050208;
+      --fg: #f8f3ec;
+      --muted: rgba(248, 243, 236, 0.55);
+      --fire-red: #FF2D00;
+      --neon-orange: #FF6B00;
+      --hot-magenta: #FF008C;
+      --warm-amber: #FFB800;
+      --electric-cyan: #00E5FF;
+      --royal-purple: #9D4EDD;
+      --font-display: 'Inter', sans-serif;
+      --font-heavy: 'Anton', sans-serif;
+      --font-serif: 'Playfair Display', serif;
+      --font-script: 'Caveat', cursive;
+      --font-mono: 'JetBrains Mono', monospace;
+      --ease-primary: cubic-bezier(0.65, 0, 0.35, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: var(--bg); }
+    body {
+      background: var(--bg); color: var(--fg);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: var(--fire-red); color: var(--bg); }
+
+    .loader {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      transition: opacity 800ms var(--ease-primary), visibility 800ms var(--ease-primary);
+    }
+    .loader.is-hidden { opacity: 0; visibility: hidden; }
+    .loader__pulse {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--fire-red);
+      box-shadow: 0 0 40px var(--fire-red), 0 0 80px var(--hot-magenta);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.7); opacity: 0.6; }
+      50%      { transform: scale(1.4); opacity: 1; }
+    }
+    .loader__text {
+      margin-top: 40px;
+      font-family: var(--font-script);
+      font-size: 28px;
+      color: var(--fg);
+    }
+    .loader__progress {
+      margin-top: 20px; width: 240px; height: 1px;
+      background: rgba(248, 243, 236, 0.12);
+      position: relative; overflow: hidden;
+    }
+    .loader__progress-bar {
+      position: absolute; top: 0; left: 0; bottom: 0; width: 0%;
+      background: var(--fire-red); box-shadow: 0 0 8px var(--fire-red);
+      transition: width 300ms linear;
+    }
+    .loader__status {
+      margin-top: 14px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(248, 243, 236, 0.3);
+    }
+
+    .scene {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+      background: #000;
+    }
+    .scene__video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 400ms ease-out;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    .scene__video.is-active { opacity: 1; }
+    .scene__vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 100% 80% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 18%, transparent 75%, rgba(0,0,0,0.5) 100%);
+      z-index: 2;
+    }
+
+    .scroll-proxy {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .nav-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      background: linear-gradient(180deg, rgba(0,0,0,0.65), transparent);
+      pointer-events: auto;
+    }
+    .nav-top__back {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--fg);
+      text-decoration: none;
+      transition: color 200ms;
+    }
+    .nav-top__back:hover { color: var(--fire-red); }
+    .nav-top__crumb {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .nav-top__crumb-current { color: var(--fire-red); }
+
+    .hud-progress {
+      position: fixed;
+      bottom: 32px;
+      left: 32px;
+      right: 32px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      pointer-events: none;
+    }
+    .hud-progress__chapter {
+      font-family: var(--font-script);
+      font-size: 22px;
+      color: var(--fg);
+      min-width: 180px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    }
+    .hud-progress__track {
+      flex: 1;
+      height: 1px;
+      background: rgba(248, 243, 236, 0.15);
+      position: relative;
+    }
+    .hud-progress__fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 0%;
+      background: var(--fire-red);
+      box-shadow: 0 0 8px var(--fire-red);
+      transition: width 200ms linear;
+    }
+    .hud-progress__num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .scroll-cue {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 19;
+      pointer-events: none;
+      animation: bob 2s ease-in-out infinite;
+      transition: opacity 500ms;
+    }
+    .scroll-cue.is-hidden { opacity: 0; }
+    @keyframes bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(8px); }
+    }
+    .scroll-cue svg { width: 28px; height: 28px; stroke: var(--fg); stroke-width: 1.5; fill: none; }
+    .scroll-cue__label {
+      font-family: var(--font-script);
+      font-size: 20px;
+      color: var(--fg);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    }
+
+    .chapter {
+      position: fixed;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 800ms var(--ease-out), transform 1000ms var(--ease-out);
+      max-width: 680px;
+    }
+    .chapter.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .chapter--left {
+      left: 6%;
+      top: 50%;
+      transform: translateY(-40%);
+      text-align: left;
+    }
+    .chapter--left.is-active { transform: translateY(-50%); }
+    .chapter--right {
+      right: 6%;
+      top: 50%;
+      transform: translateY(-40%);
+      text-align: right;
+    }
+    .chapter--right.is-active { transform: translateY(-50%); }
+    .chapter--center {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -40%);
+      text-align: center;
+      max-width: 800px;
+    }
+    .chapter--center.is-active { transform: translate(-50%, -50%); }
+    .chapter--bottom-center {
+      left: 50%;
+      bottom: 110px;
+      transform: translateX(-50%) translateY(20px);
+      text-align: center;
+      max-width: 800px;
+      top: auto;
+    }
+    .chapter--bottom-center.is-active { transform: translateX(-50%) translateY(0); }
+
+    .chapter__kicker {
+      font-family: var(--font-script);
+      font-size: clamp(28px, 2.4vw, 42px);
+      color: var(--fire-red);
+      margin-bottom: 14px;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.8), 0 0 20px rgba(255,45,0,0.3);
+    }
+    .chapter__heading {
+      font-family: var(--font-heavy);
+      font-size: clamp(62px, 8vw, 124px);
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      color: var(--fg);
+      margin-bottom: 22px;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6);
+    }
+    .chapter__heading em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: -0.01em;
+      color: var(--warm-amber);
+    }
+    .chapter__heading .script {
+      font-family: var(--font-script);
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0.01em;
+      color: var(--fire-red);
+      font-size: 0.95em;
+    }
+    .chapter__body {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 1.7vw, 28px);
+      line-height: 1.45;
+      color: rgba(248, 243, 236, 0.92);
+      max-width: 620px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+    }
+    .chapter--right .chapter__body { margin-left: auto; }
+    .chapter--center .chapter__body, .chapter--bottom-center .chapter__body { margin: 0 auto; }
+
+    .chapter__meta {
+      margin-top: 20px;
+      font-family: var(--font-mono);
+      font-size: clamp(13px, 1vw, 16px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fire-red);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chapter--right .chapter__meta { justify-content: flex-end; }
+    .chapter--center .chapter__meta, .chapter--bottom-center .chapter__meta { justify-content: center; }
+    .chapter__meta-line { width: 32px; height: 1px; background: var(--fire-red); }
+
+    .chapter__cta {
+      margin-top: 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 32px;
+      background: var(--fire-red);
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 200ms;
+    }
+    .chapter__cta:hover {
+      background: var(--neon-orange);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255, 45, 0, 0.4);
+    }
+
+    .intertitle {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 700ms var(--ease-primary);
+      padding: 0 5vw;
+    }
+    .intertitle.is-active { opacity: 1; }
+    .intertitle__text {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(36px, 6vw, 92px);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      text-align: center;
+      max-width: 1100px;
+      text-shadow: 0 6px 36px rgba(0,0,0,0.95);
+    }
+    .intertitle__text strong {
+      font-family: var(--font-heavy);
+      font-style: normal;
+      font-weight: 400;
+      color: var(--warm-amber);
+    }
+    .intertitle__text .script {
+      font-family: var(--font-script);
+      font-weight: 600;
+      font-style: normal;
+      color: var(--fire-red);
+      font-size: 1.05em;
+    }
+
+    .film-edges {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9;
+      mix-blend-mode: screen;
+    }
+    .film-edges::before,
+    .film-edges::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: rgba(255, 45, 0, 0.3);
+    }
+    .film-edges::before { top: 64px; }
+    .film-edges::after { bottom: 72px; }
+
+    @media (max-width: 768px) {
+      .chapter {
+        left: 5% !important;
+        right: 5% !important;
+        max-width: none;
+        top: auto !important;
+        bottom: 140px !important;
+        transform: translateY(20px) !important;
+        text-align: center !important;
+      }
+      .chapter.is-active { transform: translateY(0) !important; }
+      .chapter__kicker { font-size: 26px; }
+      .chapter__heading { font-size: clamp(50px, 15vw, 84px) !important; }
+      .chapter__body { max-width: none; margin: 0 auto !important; font-size: 18px; line-height: 1.45; }
+      .chapter__meta { font-size: 11px; letter-spacing: 0.12em; }
+      .chapter__meta { justify-content: center !important; }
+      .hud-progress { left: 16px; right: 16px; bottom: 16px; }
+      .hud-progress__chapter { font-size: 16px; min-width: 100px; }
+      .nav-top { padding: 0 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loader" id="loader">
+    <div class="loader__pulse"></div>
+    <div class="loader__text">entrando na cidade</div>
+    <div class="loader__progress">
+      <div class="loader__progress-bar" id="loader-bar"></div>
+    </div>
+    <div class="loader__status" id="loader-status">carregando filme...</div>
+  </div>
+
+  <div class="scene">
+    <video class="scene__video" id="video-hono"   src="assets/scene-hono-1080.mp4"   preload="auto" muted playsinline></video>
+    <video class="scene__video" id="video-follow" src="assets/scene-follow-1080.mp4" preload="auto" muted playsinline></video>
+    <div class="scene__vignette"></div>
+  </div>
+
+  <div class="film-edges"></div>
+
+  <nav class="nav-top">
+    <a href="/" class="nav-top__back">← voltar ao site</a>
+    <span class="nav-top__crumb">trabalhos / <span class="nav-top__crumb-current">landing pages</span></span>
+  </nav>
+
+  <div class="scroll-cue" id="scroll-cue">
+    <span class="scroll-cue__label">role para caminhar</span>
+    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  </div>
+
+  <!-- 8 CAPÍTULOS -->
+
+  <!-- Cap 1 — Abertura bottom-center (texto baixo, vídeo começa caminhando) -->
+  <div class="chapter chapter--bottom-center" id="ch-1">
+    <div class="chapter__kicker">um passeio pela cidade</div>
+    <h2 class="chapter__heading">
+      cada landing é <em>um endereço</em><br>
+      <span class="script">na sua avenida.</span>
+    </h2>
+  </div>
+
+  <!-- Cap 2 — Hono billboard à DIREITA, texto à ESQUERDA -->
+  <div class="chapter chapter--left" id="ch-2">
+    <div class="chapter__kicker">olhe à sua direita</div>
+    <h2 class="chapter__heading">
+      um <em>cliente</em><br>
+      <span class="script">virando</span><br>
+      máquina digital
+    </h2>
+    <p class="chapter__body">
+      A Hono IA precisava de uma presença que comunicasse criatividade,
+      tecnologia e força de marca em segundos. A solução: uma landing
+      cinematográfica com tigre vivo, paleta neon e narrativa imersiva.
+    </p>
+    <div class="chapter__meta">
+      <span class="chapter__meta-line"></span>
+      caso 01 · hono ai
+    </div>
+  </div>
+
+  <!-- Cap 3 — Intertitle italic centro -->
+  <div class="intertitle" id="ch-3">
+    <p class="intertitle__text">
+      <em>não construímos sites.</em><br>
+      construímos <strong>endereços</strong> que <span class="script">vendem</span>.
+    </p>
+  </div>
+
+  <!-- Cap 4 — Métricas Hono, texto à ESQUERDA (billboard ainda à direita) -->
+  <div class="chapter chapter--left" id="ch-4">
+    <div class="chapter__kicker">resultado</div>
+    <h2 class="chapter__heading" style="font-size: clamp(72px, 8vw, 128px)">
+      performance<br>
+      <em>de cinema</em>.
+    </h2>
+    <p class="chapter__body">
+      Lighthouse 98/100. LCP em 0.9s. Identidade que vira lembrança.
+      Cada pixel desenhado para converter — sem perder a alma da marca.
+    </p>
+    <div class="chapter__meta">
+      <span class="chapter__meta-line"></span>
+      tecnologia · ia · brand
+    </div>
+  </div>
+
+  <!-- Cap 5 — Transição entre vídeos -->
+  <div class="intertitle" id="ch-5">
+    <p class="intertitle__text">
+      a caminhada <span class="script">continua</span>.<br>
+      <em>outro endereço.</em> <strong>outra história.</strong>
+    </p>
+  </div>
+
+  <!-- Cap 6 — Follow billboard à ESQUERDA, texto à DIREITA -->
+  <div class="chapter chapter--right" id="ch-6">
+    <div class="chapter__kicker">olhe à sua esquerda</div>
+    <h2 class="chapter__heading">
+      <span class="script">orientação</span><br>
+      que <em>inspira</em>
+    </h2>
+    <p class="chapter__body">
+      Para a Follow Advisor, construímos uma landing B2B premium —
+      onde supply-chain, qualidade e gestão de projetos ganham
+      identidade visual que respeita a seriedade do mercado.
+    </p>
+    <div class="chapter__meta">
+      <span class="chapter__meta-line"></span>
+      caso 02 · follow advisor
+    </div>
+  </div>
+
+  <!-- Cap 7 — Filosofia, texto à DIREITA -->
+  <div class="chapter chapter--right" id="ch-7">
+    <div class="chapter__kicker">o que muda tudo</div>
+    <h2 class="chapter__heading" style="font-size: clamp(72px, 8vw, 128px)">
+      cada projeto<br>
+      tem <em>seu DNA</em>.
+    </h2>
+    <p class="chapter__body">
+      Não trabalhamos com template. Cada landing é desenhada a partir
+      do briefing — sua marca, seu público, sua meta de conversão —
+      e construída do zero. Em 5 a 7 dias.
+    </p>
+    <div class="chapter__meta">
+      <span class="chapter__meta-line"></span>
+      processo · design · entrega
+    </div>
+  </div>
+
+  <!-- Cap 8 — Final centro com CTA -->
+  <div class="chapter chapter--center" id="ch-8">
+    <div class="chapter__kicker">e o seu endereço?</div>
+    <h2 class="chapter__heading">
+      <em>a próxima</em><br>
+      <span class="script">parada</span><br>
+      é a sua.
+    </h2>
+    <p class="chapter__body">
+      Conta o que você precisa. A gente desenha, constrói, entrega —
+      e ainda imagina o letreiro brilhando na Times Square dos seus sonhos.
+    </p>
+    <a href="https://wa.me/5500000000000?text=Quero+uma+landing+page+pra+meu+negocio" class="chapter__cta">
+      <span>Vamos conversar</span>
+      <span>→</span>
+    </a>
+  </div>
+
+  <div class="hud-progress">
+    <span class="hud-progress__chapter" id="hud-chapter">capítulo um</span>
+    <div class="hud-progress__track">
+      <div class="hud-progress__fill" id="hud-fill"></div>
+    </div>
+    <span class="hud-progress__num" id="hud-num">01 / 08</span>
+  </div>
+
+  <div class="scroll-proxy"></div>
+
+  <script>
+  (function() {
+    'use strict';
+    gsap.registerPlugin(ScrollTrigger);
+
+    const loader      = document.getElementById('loader');
+    const loaderBar   = document.getElementById('loader-bar');
+    const loaderStatus= document.getElementById('loader-status');
+    const videoHono   = document.getElementById('video-hono');
+    const videoFollow = document.getElementById('video-follow');
+    const hudFill     = document.getElementById('hud-fill');
+    const hudNum      = document.getElementById('hud-num');
+    const hudChapter  = document.getElementById('hud-chapter');
+    const scrollCue   = document.getElementById('scroll-cue');
+
+    const chapters = [];
+    for (let i = 1; i <= 8; i++) {
+      chapters.push(document.getElementById('ch-' + i));
+    }
+
+    const CHAPTER_NAMES = [
+      'capítulo um',
+      'caso · hono ai',
+      'manifesto',
+      'a métrica',
+      'transição',
+      'caso · follow advisor',
+      'o método',
+      'próxima parada',
+    ];
+
+    let loadedCount = 0;
+    function onVideoReady() {
+      loadedCount++;
+      const pct = (loadedCount / 2) * 100;
+      loaderBar.style.width = pct + '%';
+      if (loadedCount === 1) loaderStatus.textContent = 'vídeo 2 / 2...';
+      if (loadedCount >= 2) {
+        loaderStatus.textContent = 'pronto';
+        setTimeout(startScene, 350);
+      }
+    }
+    function videoListen(v) {
+      let fired = false;
+      const ready = () => { if (!fired) { fired = true; onVideoReady(); } };
+      if (v.readyState >= 2) ready();
+      else {
+        v.addEventListener('loadeddata', ready, { once: true });
+        v.addEventListener('canplay', ready, { once: true });
+      }
+    }
+    videoListen(videoHono);
+    videoListen(videoFollow);
+    loaderStatus.textContent = 'vídeo 1 / 2...';
+
+    setTimeout(() => {
+      if (!loader.classList.contains('is-hidden')) {
+        loaderBar.style.width = '100%';
+        startScene();
+      }
+    }, 10000);
+
+    function startScene() {
+      videoHono.classList.add('is-active');
+      videoHono.pause(); videoFollow.pause();
+      try { videoHono.currentTime = 0; videoFollow.currentTime = 0; } catch (e) {}
+      loader.classList.add('is-hidden');
+      setActiveChapter(0, 0, 4);
+      initScroll();
+    }
+
+    function setActiveChapter(idx, stopIdx = idx, totalStops = 8) {
+      chapters.forEach((c, i) => {
+        if (i === idx) c.classList.add('is-active');
+        else c.classList.remove('is-active');
+      });
+      hudChapter.textContent = CHAPTER_NAMES[idx] || '';
+      hudNum.textContent = String(stopIdx + 1).padStart(2,'0') + ' / ' + String(totalStops).padStart(2,'0');
+    }
+
+    function switchVideo(toFollow) {
+      if (toFollow) {
+        videoFollow.classList.add('is-active');
+        videoHono.classList.remove('is-active');
+      } else {
+        videoHono.classList.add('is-active');
+        videoFollow.classList.remove('is-active');
+      }
+    }
+
+    function initScroll() {
+      const safeDuration = (video) => {
+        if (!video.duration || isNaN(video.duration)) return 8.0;
+        return Math.max(0.1, video.duration - 0.08);
+      };
+      const STOPS = [
+        { chapter: 0, video: videoHono, follow: false, time: () => 0, label: 'capitulo um' },
+        { chapter: 3, video: videoHono, follow: false, time: () => Math.min(5.2, safeDuration(videoHono)), label: 'a metrica' },
+        { chapter: 6, video: videoFollow, follow: true, time: () => Math.min(4.9, safeDuration(videoFollow)), label: 'o metodo' },
+        { chapter: 7, video: videoFollow, follow: true, time: () => safeDuration(videoFollow), label: 'proxima parada' },
+      ];
+      let currentStop = -1;
+      let isPlayingSegment = false;
+      let playToken = 0;
+
+      function showStop(idx) {
+        currentStop = idx;
+        const stop = STOPS[idx];
+        const time = Math.max(0, Math.min(stop.time(), safeDuration(stop.video)));
+
+        switchVideo(stop.follow);
+        videoHono.pause();
+        videoFollow.pause();
+        try { stop.video.currentTime = time; } catch (e) {}
+
+        setActiveChapter(stop.chapter, idx, STOPS.length);
+        hudChapter.textContent = stop.label;
+        hudFill.style.width = ((idx / (STOPS.length - 1)) * 100) + '%';
+        scrollCue.classList.toggle('is-hidden', idx > 0);
+      }
+
+      function playToStop(nextStop) {
+        if (isPlayingSegment || nextStop === currentStop) return;
+        if (nextStop < 0 || nextStop >= STOPS.length) return;
+
+        const from = STOPS[currentStop];
+        const to = STOPS[nextStop];
+        const video = to.video;
+        const start = from.video === to.video ? from.time() : 0;
+        const end = Math.max(start, Math.min(to.time(), safeDuration(video)));
+
+        playToken++;
+        const token = playToken;
+        isPlayingSegment = true;
+        scrollCue.classList.add('is-hidden');
+
+        switchVideo(to.follow);
+        const inactiveVideo = to.follow ? videoHono : videoFollow;
+        inactiveVideo.pause();
+        video.currentTime = start;
+
+        if (Math.abs(end - start) <= 0.06) {
+          showStop(nextStop);
+          isPlayingSegment = false;
+          return;
+        }
+
+        video.playbackRate = 1;
+        video.play().catch(() => {});
+
+        const tick = () => {
+          if (token !== playToken) return;
+          if (video.currentTime >= end - 0.04 || video.ended) {
+            video.pause();
+            try { video.currentTime = end; } catch (e) {}
+            isPlayingSegment = false;
+            showStop(nextStop);
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+
+      function goNext() {
+        playToStop(Math.min(STOPS.length - 1, currentStop + 1));
+      }
+
+      function goPrev() {
+        if (isPlayingSegment) return;
+        showStop(Math.max(0, currentStop - 1));
+      }
+
+      showStop(0);
+
+      window.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (Math.abs(e.deltaY) < 8) return;
+        if (e.deltaY > 0) goNext();
+        else goPrev();
+      }, { passive: false });
+
+      let touchStartY = null;
+      window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (touchStartY === null) return;
+        const delta = touchStartY - e.touches[0].clientY;
+        if (Math.abs(delta) < 36) return;
+        e.preventDefault();
+        touchStartY = null;
+        if (delta > 0) goNext();
+        else goPrev();
+      }, { passive: false });
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowDown','PageDown','Space',' '].includes(e.key)) {
+          e.preventDefault();
+          goNext();
+        } else if (['ArrowUp','PageUp'].includes(e.key)) {
+          e.preventDefault();
+          goPrev();
+        }
+      });
+    }
+
+    window.addEventListener('resize', () => ScrollTrigger.refresh());
+    console.log('%c HONO · Times Square Scene', 'background:#FF2D00;color:#000;padding:4px 10px;font-weight:bold;');
+  })();
+  </script>
+</body>
+</html>
