@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>HONO IA — Cinema Tech</title>
-  <link rel="icon" href="assets/logo.jpeg" type="image/jpeg">
+  <link rel="icon" href="assets/fav.png" type="image/png">
   <meta name="description" content="Hono IA — landing pages, sistemas e conteúdos com IA.">
 
   <link rel="preload" as="image" href="assets/video-01-lastframe.jpg">
@@ -609,7 +609,7 @@
 
   <header class="site-header" id="site-header">
     <button class="site-header__logo" id="logo-btn" aria-label="Voltar ao início" type="button">
-      <img src="assets/logo.jpeg" alt="Hono IA">
+      <img src="assets/logo.png" alt="Hono IA">
     </button>
     <nav class="site-header__nav" aria-label="Navegação">
       <a href="#section-02" class="site-header__link">TRABALHOS</a>
@@ -632,7 +632,7 @@
     <section id="section-01">
       <div class="zoom-stage" id="zoom-stage">
         <video class="video-01" id="video-01" src="assets/video-01.mp4" playsinline preload="auto"></video>
-        <video class="video-02" id="video-02" src="assets/intro2.mp4" muted playsinline preload="auto" poster="assets/startup.png"></video>
+        <video class="video-02" id="video-02" src="assets/videoscroll.mov" muted playsinline preload="auto" poster="assets/startup.png"></video>
         <img class="v1-poster" id="v1-poster" src="assets/video-01-lastframe.jpg" alt="" aria-hidden="true">
         <img class="v2-poster" id="v2-poster" src="assets/startup.png" alt="" aria-hidden="true">
 
@@ -886,7 +886,7 @@
       if (e.key === 'Escape' && escTimer) { clearTimeout(escTimer); escTimer = null; }
     });
 
-    // CORTE — landing fixo quando video-02 vai pra tela preta
+    // CORTE — inicia o showcase quando video-02 termina no scroll
     const BLACK_CUT_DELAY_MS = 1000; // espera no preto antes de ir para a landing
     let cutDone = false;
     let cutTimer = null;
@@ -921,19 +921,19 @@
     };
     // ACT 3 — Scroll-scrub
     const SCREEN_ORIGIN_X = 50, SCREEN_ORIGIN_Y = 42, MAX_SCALE = 1.3;
-    const REVERSE_ZOOM_END_SEC = 0.05;
+    const SCROLL_VIDEO_START_SEC = 0.05;
     const clamp01 = (value) => Math.max(0, Math.min(1, value));
-    const syncReverseZoomVideo = (progress) => {
+    const syncScrollVideo = (progress) => {
       if (!video02.duration || isNaN(video02.duration)) return false;
-      const startAt = Math.max(REVERSE_ZOOM_END_SEC, video02.duration - 0.05);
-      const endAt = Math.min(REVERSE_ZOOM_END_SEC, startAt);
+      const startAt = Math.min(SCROLL_VIDEO_START_SEC, video02.duration);
+      const endAt = Math.max(startAt, video02.duration - 0.05);
       const t = startAt + (endAt - startAt) * clamp01(progress);
       if (Math.abs(video02.currentTime - t) > 0.02) video02.currentTime = t;
       v2Poster.classList.remove('is-visible');
       return true;
     };
     video02.addEventListener('loadedmetadata', () => {
-      syncReverseZoomVideo(0);
+      syncScrollVideo(0);
     });
     let scrolledOnce = false;
     const onFirstScroll = () => {
@@ -958,7 +958,7 @@
         if (p > 0.001) {
           if (v1Poster.classList.contains('is-visible')) v1Poster.classList.remove('is-visible');
           if (!video02.classList.contains('is-active')) video02.classList.add('is-active');
-          if (!syncReverseZoomVideo(p)) {
+          if (!syncScrollVideo(p)) {
             v2Poster.classList.add('is-visible');
           }
           if (!scrolledOnce) onFirstScroll();
